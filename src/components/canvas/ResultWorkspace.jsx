@@ -4,10 +4,14 @@ import { Download, RefreshCw } from 'lucide-react';
 export const ResultWorkspace = ({
   imageSrc,
   selectedFaceId,
+  focalPoint = { centerX: 0.5, centerY: 0.5 },
   onDownload,
   onShare,
   onCreateAnother
 }) => {
+  const posX = Math.round((focalPoint?.centerX ?? 0.5) * 100);
+  const posY = Math.round((focalPoint?.centerY ?? 0.5) * 100);
+
   return (
     <div className="w-full flex flex-col items-center gap-4">
       {/* Generated Result Artifact Frame inside the right workspace */}
@@ -27,6 +31,7 @@ export const ResultWorkspace = ({
           <img 
             src={imageSrc || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80'} 
             alt="Hacker House Goa PFP" 
+            style={{ objectPosition: `${posX}% ${posY}%` }}
             className="w-full h-full object-cover transition-all duration-500"
           />
           

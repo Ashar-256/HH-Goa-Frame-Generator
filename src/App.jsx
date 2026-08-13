@@ -1,42 +1,106 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/common/Header';
 import { UploadWorkspace } from './components/upload/UploadWorkspace';
 import { FaceSelectionWorkspace } from './components/detection/FaceSelectionWorkspace';
 import { ResultWorkspace } from './components/canvas/ResultWorkspace';
-import { Upload } from 'lucide-react';
+import { initFaceDetector, detectFaces } from './services/faceDetection';
+import { validateImageFile, loadImageElement, revokeImageObjectUrl } from './utils/fileHelpers';
+import { cropImageToSquare } from './utils/canvasHelpers';
+import { AlertCircle } from 'lucide-react';
 
 export default function App() {
   const [workspaceState, setWorkspaceState] = useState('UPLOAD'); // 'UPLOAD', 'SELECT', 'RESULT'
-  const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedImageSrc, setUploadedImageSrc] = useState(null);
+  const [croppedImageSrc, setCroppedImageSrc] = useState(null);
+  const [detectedFaces, setDetectedFaces] = useState([]);
+  const [selectedFocalPoint, setSelectedFocalPoint] = useState({ centerX: 0.5, centerY: 0.5 });
   const [selectedFaceId, setSelectedFaceId] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
 
-  const handleFileSelect = (file) => {
-    const objectUrl = URL.createObjectURL(file);
-    setUploadedImage(objectUrl);
+  // Store active decoded HTMLImageElement reference for fast smart-cropping
+  const activeImageRef = useRef(null);
 
-    // Simple internal heuristic: if filename contains 'multi', 'group', or 'team', show multi-face selection
-    const isMultiFace = file.name.toLowerCase().includes('multi') || 
-                       file.name.toLowerCase().includes('group') || 
-                       file.name.toLowerCase().includes('team');
+  // Initialize MediaPipe detector in background after UI is interactive
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      initFaceDetector().catch((err) => {
+        console.warn('[App] MediaPipe background pre-init warning:', err);
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-    if (isMultiFace) {
-      setWorkspaceState('SELECT');
-    } else {
-      setWorkspaceState('RESULT');
+  const handleFileSelect = async (file) => {
+    setUploadError(null);
+
+    // 1. Validate file
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setUploadError(validation.error);
+      return;
+    }
+
+    try {
+      // 2. Decode image file into loaded HTMLImageElement
+      const imgElement = await loadImageElement(file);
+      activeImageRef.current = imgElement;
+
+      const objectUrl = imgElement._objectUrl || URL.createObjectURL(file);
+      setUploadedImageSrc(objectUrl);
+
+      // 3. Run real MediaPipe face detection
+      const result = await detectFaces(imgElement);
+      const faces = result.faces || [];
+      const focalPoint = result.focalPoint || { centerX: 0.5, centerY: 0.5 };
+
+      if (faces.length >= 2) {
+        // Multi-face photo: show selection UI
+        setDetectedFaces(faces);
+        setSelectedFocalPoint(focalPoint);
+        setWorkspaceState('SELECT');
+      } else {
+        // Single face or 0 faces: auto-crop & advance directly to result
+        setDetectedFaces(faces);
+        setSelectedFocalPoint(focalPoint);
+        setSelectedFaceId(faces[0]?.id || 'face_1');
+
+        // Execute deterministic smart crop to 1080x1080
+        const croppedUrl = cropImageToSquare(imgElement, focalPoint);
+        setCroppedImageSrc(croppedUrl);
+
+        setWorkspaceState('RESULT');
+      }
+    } catch (err) {
+      console.error('[App] File processing error:', err);
+      setUploadError(err.message || 'Failed to process photo. Please try another image.');
     }
   };
 
-  const handleSelectFace = (faceId) => {
-    setSelectedFaceId(faceId);
+  const handleSelectFace = (face) => {
+    if (face && activeImageRef.current) {
+      const focalPoint = { centerX: face.centerX, centerY: face.centerY };
+      setSelectedFaceId(face.id);
+      setSelectedFocalPoint(focalPoint);
+
+      // Smart-crop square centered on user-selected face
+      const croppedUrl = cropImageToSquare(activeImageRef.current, focalPoint);
+      setCroppedImageSrc(croppedUrl);
+    }
+    // Proceed directly to Result State
     setWorkspaceState('RESULT');
   };
 
   const handleResetWorkspace = () => {
-    if (uploadedImage) {
-      URL.revokeObjectURL(uploadedImage);
+    if (uploadedImageSrc) {
+      revokeImageObjectUrl(uploadedImageSrc);
     }
-    setUploadedImage(null);
+    activeImageRef.current = null;
+    setUploadedImageSrc(null);
+    setCroppedImageSrc(null);
+    setDetectedFaces([]);
+    setSelectedFocalPoint({ centerX: 0.5, centerY: 0.5 });
     setSelectedFaceId(null);
+    setUploadError(null);
     setWorkspaceState('UPLOAD');
   };
 
@@ -94,8 +158,7 @@ export default function App() {
 
                 {/* Left Side Trigger Button */}
                 <label className="upload-btn-dashed flex items-center justify-center gap-3 py-4 px-8 uppercase w-full sm:w-auto self-start mb-4 rounded cursor-pointer">
-                  <Upload size={20} strokeWidth={2.5} />
-                  UPLOAD YOUR PHOTO
+                  <span>UPLOAD YOUR PHOTO</span>
                   <input
                     type="file"
                     onChange={(e) => {
@@ -123,21 +186,30 @@ export default function App() {
               
               {/* Dynamic Content Slot based on workspaceState */}
               <div className="w-full flex-grow flex flex-col justify-center">
+                {uploadError && (
+                  <div className="mb-4 bg-[#93000a]/20 border border-[#ffb4ab]/40 text-[#ffb4ab] p-3 rounded flex items-center gap-2.5 font-mono-labels text-xs">
+                    <AlertCircle size={18} className="shrink-0" />
+                    <span>{uploadError}</span>
+                  </div>
+                )}
+
                 {workspaceState === 'UPLOAD' && (
                   <UploadWorkspace onFileSelect={handleFileSelect} />
                 )}
 
                 {workspaceState === 'SELECT' && (
                   <FaceSelectionWorkspace 
-                    imageSrc={uploadedImage}
+                    imageSrc={uploadedImageSrc}
+                    detectedFaces={detectedFaces}
                     onSelectFace={handleSelectFace}
                   />
                 )}
 
                 {workspaceState === 'RESULT' && (
                   <ResultWorkspace 
-                    imageSrc={uploadedImage}
+                    imageSrc={croppedImageSrc || uploadedImageSrc}
                     selectedFaceId={selectedFaceId}
+                    focalPoint={selectedFocalPoint}
                     onDownload={handleDownload}
                     onShare={handleShare}
                     onCreateAnother={handleResetWorkspace}
