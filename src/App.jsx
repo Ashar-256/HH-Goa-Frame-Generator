@@ -6,16 +6,20 @@ import { ResultWorkspace } from './components/canvas/ResultWorkspace';
 import { initFaceDetector, detectFaces } from './services/faceDetection';
 import { validateImageFile, loadImageElement, revokeImageObjectUrl } from './utils/fileHelpers';
 import { cropImageToSquare } from './utils/canvasHelpers';
+import { renderHHGoaFrame } from './services/canvas';
+import { getRandomShareText } from './utils/shareHelpers';
 import { AlertCircle } from 'lucide-react';
 
 export default function App() {
   const [workspaceState, setWorkspaceState] = useState('UPLOAD'); // 'UPLOAD', 'SELECT', 'RESULT'
   const [uploadedImageSrc, setUploadedImageSrc] = useState(null);
   const [croppedImageSrc, setCroppedImageSrc] = useState(null);
+  const [renderedFrameUrl, setRenderedFrameUrl] = useState(null);
   const [detectedFaces, setDetectedFaces] = useState([]);
   const [selectedFocalPoint, setSelectedFocalPoint] = useState({ centerX: 0.5, centerY: 0.5 });
   const [selectedFaceId, setSelectedFaceId] = useState(null);
   const [uploadError, setUploadError] = useState(null);
+  const [templateIndex, setTemplateIndex] = useState(0); // Rotates templates automatically (0, 1, 2)
 
   // Store active decoded HTMLImageElement reference for fast smart-cropping
   const activeImageRef = useRef(null);
@@ -29,6 +33,16 @@ export default function App() {
     }, 500);
     return () => clearTimeout(timer);
   }, []);
+
+  const generateFinalFrame = async (croppedUrl, currentTplIndex) => {
+    try {
+      const frameUrl = await renderHHGoaFrame(croppedUrl, currentTplIndex);
+      setRenderedFrameUrl(frameUrl);
+    } catch (err) {
+      console.warn('[App] Frame rendering warning:', err);
+      setRenderedFrameUrl(croppedUrl); // Fallback to cropped image if canvas fails
+    }
+  };
 
   const handleFileSelect = async (file) => {
     setUploadError(null);
@@ -59,14 +73,17 @@ export default function App() {
         setSelectedFocalPoint(focalPoint);
         setWorkspaceState('SELECT');
       } else {
-        // Single face or 0 faces: auto-crop & advance directly to result
+        // Single face or 0 faces: auto-crop & render HH Goa frame
         setDetectedFaces(faces);
         setSelectedFocalPoint(focalPoint);
         setSelectedFaceId(faces[0]?.id || 'face_1');
 
-        // Execute deterministic smart crop to 1080x1080
+        // Execute deterministic smart crop to 1080x1080 square
         const croppedUrl = cropImageToSquare(imgElement, focalPoint);
         setCroppedImageSrc(croppedUrl);
+
+        // Render 1080x1080 HTML5 2D Canvas frame
+        await generateFinalFrame(croppedUrl, templateIndex);
 
         setWorkspaceState('RESULT');
       }
@@ -76,7 +93,7 @@ export default function App() {
     }
   };
 
-  const handleSelectFace = (face) => {
+  const handleSelectFace = async (face) => {
     if (face && activeImageRef.current) {
       const focalPoint = { centerX: face.centerX, centerY: face.centerY };
       setSelectedFaceId(face.id);
@@ -85,6 +102,9 @@ export default function App() {
       // Smart-crop square centered on user-selected face
       const croppedUrl = cropImageToSquare(activeImageRef.current, focalPoint);
       setCroppedImageSrc(croppedUrl);
+
+      // Render 1080x1080 HTML5 2D Canvas frame
+      await generateFinalFrame(croppedUrl, templateIndex);
     }
     // Proceed directly to Result State
     setWorkspaceState('RESULT');
@@ -97,19 +117,57 @@ export default function App() {
     activeImageRef.current = null;
     setUploadedImageSrc(null);
     setCroppedImageSrc(null);
+    setRenderedFrameUrl(null);
     setDetectedFaces([]);
     setSelectedFocalPoint({ centerX: 0.5, centerY: 0.5 });
     setSelectedFaceId(null);
     setUploadError(null);
+    
+    // Automatically rotate to next template on Create Another
+    setTemplateIndex((prev) => (prev + 1) % 3);
     setWorkspaceState('UPLOAD');
   };
 
+  const [shareNotice, setShareNotice] = useState(false);
+
   const handleDownload = () => {
-    alert('Artifact download initiated. (Canvas engine will export crisp high-res PNG)');
+    if (!renderedFrameUrl) return;
+    const link = document.createElement('a');
+    link.download = `hh-goa-2026-pfp-${Date.now()}.png`;
+    link.href = renderedFrameUrl;
+    link.click();
   };
 
-  const handleShare = () => {
-    const text = encodeURIComponent('Signalling achieved at HH GOA 2026! 🚀 AI x CRYPTO x MULTICHAIN #HHGoa2026 #HackerHouse');
+  const handleShare = async () => {
+    if (renderedFrameUrl) {
+      // 1. Auto-download PNG image to user's device
+      const link = document.createElement('a');
+      link.download = `hh-goa-2026-pfp-${Date.now()}.png`;
+      link.href = renderedFrameUrl;
+      link.click();
+
+      // 2. Copy PNG image blob to clipboard if supported by browser
+      try {
+        const res = await fetch(renderedFrameUrl);
+        const blob = await res.blob();
+        if (navigator.clipboard && window.ClipboardItem) {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+        }
+      } catch (e) {
+        // Fallback silently if clipboard write permissions unavailable
+      }
+    }
+
+    // 3. Open X compose interface with randomized caption
+    const isMultiFace = detectedFaces.length >= 2;
+    const rawText = getRandomShareText(isMultiFace);
+    const text = encodeURIComponent(rawText);
+
+    setShareNotice(true);
+    setTimeout(() => setShareNotice(false), 10000);
+
     window.open(`https://x.com/intent/tweet?text=${text}`, '_blank');
   };
 
@@ -207,9 +265,11 @@ export default function App() {
 
                 {workspaceState === 'RESULT' && (
                   <ResultWorkspace 
+                    renderedFrameUrl={renderedFrameUrl}
                     imageSrc={croppedImageSrc || uploadedImageSrc}
                     selectedFaceId={selectedFaceId}
                     focalPoint={selectedFocalPoint}
+                    shareNotice={shareNotice}
                     onDownload={handleDownload}
                     onShare={handleShare}
                     onCreateAnother={handleResetWorkspace}

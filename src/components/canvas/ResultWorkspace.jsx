@@ -2,72 +2,40 @@ import React from 'react';
 import { Download, RefreshCw } from 'lucide-react';
 
 export const ResultWorkspace = ({
+  renderedFrameUrl,
   imageSrc,
-  selectedFaceId,
-  focalPoint = { centerX: 0.5, centerY: 0.5 },
+  shareNotice,
   onDownload,
   onShare,
   onCreateAnother
 }) => {
-  const posX = Math.round((focalPoint?.centerX ?? 0.5) * 100);
-  const posY = Math.round((focalPoint?.centerY ?? 0.5) * 100);
+  const displayImage = renderedFrameUrl || imageSrc;
 
   return (
     <div className="w-full flex flex-col items-center gap-4">
-      {/* Generated Result Artifact Frame inside the right workspace */}
-      <div className="relative w-full aspect-square bg-[#20201b] border-2 border-[#35352f] rounded-lg overflow-hidden shadow-2xl flex flex-col p-4 md:p-6 group">
+      {/* Official HH Goa 2026 Generated Frame Asset */}
+      <div className="relative w-full aspect-square bg-[#061a14] border border-[#35352f]/40 rounded-lg overflow-hidden shadow-2xl flex flex-col p-1 group">
         
-        {/* Decorative Top Pin */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-secondary-fixed border-2 border-background z-20 editorial-shadow"></div>
-
-        {/* Branding Header inside frame */}
-        <div className="flex justify-between items-start mb-3 font-mono-labels text-[10px] text-secondary-fixed uppercase z-10">
-          <span className="tracking-widest">HH GOA 2026</span>
-          <span className="tracking-widest text-[#ffb1c4]">AI × CRYPTO × MULTICHAIN</span>
-        </div>
-
-        {/* Hero Image Container */}
-        <div className="flex-grow relative overflow-hidden bg-background border border-[#35352f] rounded shadow-inner">
+        {/* Rendered 1080x1080 Canvas Output */}
+        <div className="flex-grow relative overflow-hidden bg-background rounded shadow-inner">
           <img 
-            src={imageSrc || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80'} 
-            alt="Hacker House Goa PFP" 
-            style={{ objectPosition: `${posX}% ${posY}%` }}
-            className="w-full h-full object-cover transition-all duration-500"
+            src={displayImage} 
+            alt="Hacker House Goa 2026 Profile Frame" 
+            className="w-full h-full object-cover transition-all duration-300"
           />
-          
-          {/* Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80"></div>
-          
-          <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
-            <div className="flex flex-col gap-1">
-              <span className="font-mono-labels text-[9px] text-[#ffb1c4] uppercase border border-[#ffb1c4] px-1.5 py-0.5 self-start bg-background/60 backdrop-blur-sm rounded">
-                {selectedFaceId === 'face_2' ? 'Lvl 99 Teammate' : 'Lvl 99 Participant'}
-              </span>
-              <h3 className="font-headline-xl text-3xl md:text-4xl text-secondary-fixed uppercase leading-none mt-1 drop-shadow-md">
-                SIGNAL<br />ACHIEVED
-              </h3>
-            </div>
-
-            <div className="text-right">
-              <span className="font-mono-labels text-[9px] text-primary opacity-80 uppercase block mb-0.5">
-                ID: {selectedFaceId === 'face_2' ? '#4093' : '#4092'}
-              </span>
-              <span className="material-symbols-outlined text-secondary-fixed text-3xl opacity-90" data-icon="fingerprint">
-                fingerprint
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Branding Footer inside frame */}
-        <div className="mt-3 flex justify-between items-center font-mono-labels text-[9px] text-[#bfc9bf] uppercase border-t border-[#35352f] pt-2 z-10">
-          <span>GENERATED ARCHIVE</span>
-          <span>14:02:45 UTC</span>
         </div>
       </div>
 
+      {/* Share Helper Guidance Notice */}
+      {shareNotice && (
+        <div className="w-full bg-[#0a2d1d] border border-[#ffe16d]/50 text-[#ffe16d] p-3 rounded text-center font-mono-labels text-[11px] uppercase tracking-wide shadow-lg">
+          📸 <strong>Frame saved to your device & copied to clipboard!</strong><br />
+          Press <strong>Ctrl+V</strong> (or click the 🖼️ photo icon on X) to attach your image to the post.
+        </div>
+      )}
+
       {/* Action Buttons directly below the workspace */}
-      <div className="w-full flex flex-col gap-3 mt-2">
+      <div className="w-full flex flex-col gap-3 mt-1">
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Download Button */}
           <button 
@@ -90,8 +58,13 @@ export const ResultWorkspace = ({
           </button>
         </div>
 
+        {/* Persistent Sharing Note */}
+        <div className="w-full bg-[#0a2d1d]/80 border border-[#ffe16d]/30 text-[#ffe16d] p-2.5 rounded text-center font-mono-labels text-[10px] sm:text-[11px] uppercase tracking-wide">
+          💡 <strong>Pro-Tip:</strong> Share to X copies your frame to clipboard & downloads it! Press <strong>Ctrl+V</strong> on X to paste your photo.
+        </div>
+
         {/* Create Another Reset Link */}
-        <div className="w-full flex justify-center mt-1">
+        <div className="w-full flex justify-center mt-0.5">
           <button 
             onClick={onCreateAnother}
             className="font-mono-labels text-[11px] text-primary hover:text-secondary-fixed transition-colors underline decoration-primary hover:decoration-secondary-fixed underline-offset-4 uppercase flex items-center gap-1.5 cursor-pointer bg-transparent border-none py-1"
