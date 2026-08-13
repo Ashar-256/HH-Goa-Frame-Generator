@@ -1,138 +1,206 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Header } from './components/common/Header';
-import { Footer } from './components/common/Footer';
-import { StatusCard } from './components/common/StatusCard';
-import { MODULE_ARCHITECTURE, SYSTEM_SPECS } from './constants/appConfig';
-import { CheckCircle2, ShieldCheck, Layers, Cpu, Smartphone } from 'lucide-react';
+import { UploadWorkspace } from './components/upload/UploadWorkspace';
+import { FaceSelectionWorkspace } from './components/detection/FaceSelectionWorkspace';
+import { ResultWorkspace } from './components/canvas/ResultWorkspace';
+import { Upload } from 'lucide-react';
 
 export default function App() {
+  const [workspaceState, setWorkspaceState] = useState('UPLOAD'); // 'UPLOAD', 'SELECT', 'RESULT'
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [selectedFaceId, setSelectedFaceId] = useState(null);
+
+  const handleFileSelect = (file) => {
+    const objectUrl = URL.createObjectURL(file);
+    setUploadedImage(objectUrl);
+
+    // Simple internal heuristic: if filename contains 'multi', 'group', or 'team', show multi-face selection
+    const isMultiFace = file.name.toLowerCase().includes('multi') || 
+                       file.name.toLowerCase().includes('group') || 
+                       file.name.toLowerCase().includes('team');
+
+    if (isMultiFace) {
+      setWorkspaceState('SELECT');
+    } else {
+      setWorkspaceState('RESULT');
+    }
+  };
+
+  const handleSelectFace = (faceId) => {
+    setSelectedFaceId(faceId);
+    setWorkspaceState('RESULT');
+  };
+
+  const handleResetWorkspace = () => {
+    if (uploadedImage) {
+      URL.revokeObjectURL(uploadedImage);
+    }
+    setUploadedImage(null);
+    setSelectedFaceId(null);
+    setWorkspaceState('UPLOAD');
+  };
+
+  const handleDownload = () => {
+    alert('Artifact download initiated. (Canvas engine will export crisp high-res PNG)');
+  };
+
+  const handleShare = () => {
+    const text = encodeURIComponent('Signalling achieved at HH GOA 2026! 🚀 AI x CRYPTO x MULTICHAIN #HHGoa2026 #HackerHouse');
+    window.open(`https://x.com/intent/tweet?text=${text}`, '_blank');
+  };
+
   return (
-    <div className="app-container">
+    <div className="min-h-screen flex flex-col grid-lines bg-background text-on-background">
+      {/* Persistent Header */}
       <Header />
 
-      <main className="main-content">
-        {/* Landing Hero Section */}
-        <section style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.4rem 1rem',
-            borderRadius: 'var(--radius-full)',
-            background: 'rgba(0, 240, 255, 0.08)',
-            border: '1px solid rgba(0, 240, 255, 0.25)',
-            marginBottom: '1.25rem'
-          }}>
-            <ShieldCheck size={16} color="var(--primary-cyan)" />
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary-cyan)', letterSpacing: '0.05em' }}>
-              PROJECT FOUNDATION INITIALIZED
-            </span>
-          </div>
-
-          <h2 style={{
-            fontSize: 'clamp(2rem, 5vw, 3.25rem)',
-            fontWeight: 800,
-            marginBottom: '1rem',
-            letterSpacing: '-0.03em'
-          }}>
-            Hacker House Goa 2026<br />
-            <span className="gradient-text">Frame Generator Application</span>
-          </h2>
-
-          <p style={{
-            maxWidth: '680px',
-            margin: '0 auto 2rem auto',
-            fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
-            color: 'var(--text-muted)',
-            lineHeight: 1.6
-          }}>
-            The React 18 + Vite foundation has been successfully configured with a clean, scalable modular architecture for client-side face detection, focal-point cropping, Canvas frame synthesis, and social sharing.
-          </p>
-
-          {/* System Specs Bar */}
-          <div className="glass-card" style={{
-            maxWidth: '900px',
-            margin: '0 auto',
-            padding: '1.25rem',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: '1rem',
-            textAlign: 'left'
-          }}>
-            {SYSTEM_SPECS.map((spec, index) => (
-              <div key={index} style={{ borderLeft: '2px solid var(--primary-cyan)', paddingLeft: '0.75rem' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', uppercase: 'true', letterSpacing: '0.05em' }}>
-                  {spec.label}
-                </div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  {spec.value}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Architectural Readiness Grid Section */}
-        <section style={{ marginBottom: '3rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Layers size={22} color="var(--primary-cyan)" />
-                Architectural Modules
-              </h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                Structured folder and service hierarchy configured for upcoming task implementations.
-              </p>
-            </div>
-
-            <div className="badge badge-primary" style={{ padding: '0.5rem 1rem' }}>
-              <CheckCircle2 size={14} /> 9 / 9 Modules Structured
+      {/* Main Generator Composition (Fixed Page Structure) */}
+      <main className="flex-grow flex flex-col items-center justify-center p-4 md:p-12 w-full max-w-[1440px] mx-auto">
+        
+        {/* Persistent Green Framed Container */}
+        <div className="w-full max-w-[1100px] bg-[#0a2d1d] p-6 md:p-8 lg:p-12 double-drawn-border relative overflow-hidden flex flex-col justify-between shadow-2xl">
+          
+          {/* Top Frame Header */}
+          <div className="flex justify-between items-center mb-8 border-b border-[#35352f]/40 pb-4 font-mono-labels text-xs text-secondary-fixed uppercase">
+            <span className="tracking-widest">HH GOA 26</span>
+            <div className="flex items-center gap-1.5">
+              <span className="tracking-widest text-[#ffb1c4]">AI × CRYPTO × MULTICHAIN</span>
+              <svg width="18" height="6" viewBox="0 0 18 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 5c1-1.5 2-1.5 3 0s2 1.5 3 0 2-1.5 3 0" stroke="#ff007a" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
             </div>
           </div>
 
-          <div className="grid-responsive">
-            {MODULE_ARCHITECTURE.map((module) => (
-              <StatusCard key={module.id} module={module} />
-            ))}
-          </div>
-        </section>
+          {/* Persistent Two-Column Layout */}
+          <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch min-h-[420px]">
+            
+            {/* FIXED LEFT SIDE: Branding, Headlines, CTA, & Sunset Illustration */}
+            <div className="lg:col-span-5 flex flex-col justify-between text-left h-full">
+              <div className="flex flex-col">
+                <h2 className="font-display-serif text-5xl sm:text-6xl lg:text-7xl leading-[0.9] text-secondary-fixed mb-4 tracking-tight">
+                  FRAME YOUR<br />
+                  IDENTITY<br />
+                  BUILDER<span className="text-[#ff007a]">.</span>
+                </h2>
 
-        {/* Verification & Mobile Readiness Card */}
-        <section className="glass-card" style={{
-          padding: '2rem',
-          background: 'linear-gradient(135deg, rgba(22, 29, 47, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
-          borderColor: 'rgba(0, 240, 255, 0.2)'
-        }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'rgba(255, 0, 122, 0.1)',
-                border: '1px solid rgba(255, 0, 122, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--primary-pink)',
-                flexShrink: 0
-              }}>
-                <Smartphone size={24} />
-              </div>
-              <div>
-                <h4 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.3rem' }}>
-                  Mobile-First & Clean Execution Verified
-                </h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  The application is configured to be fully responsive across mobile, tablet, and desktop viewports. All code adheres strictly to standard client-side React + Vite practices without over-engineered backend dependencies.
+                <p className="font-body-lg text-[#e5e2da] opacity-90 text-lg mb-6 leading-relaxed">
+                  Create your Hacker House Goa 2026 profile frame.
+                </p>
+
+                {/* Pink Wave Divider */}
+                <svg width="48" height="8" viewBox="0 0 48 8" className="mb-8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 6c3-3 5-3 8 0s5 3 8 0 5-3 8 0 5-3 8 0 5-3 8 0" stroke="#ff007a" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+
+                {/* Left Side Trigger Button */}
+                <label className="upload-btn-dashed flex items-center justify-center gap-3 py-4 px-8 uppercase w-full sm:w-auto self-start mb-4 rounded cursor-pointer">
+                  <Upload size={20} strokeWidth={2.5} />
+                  UPLOAD YOUR PHOTO
+                  <input
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileSelect(file);
+                    }}
+                    accept="image/jpeg,image/png,image/heic,image/heif,image/webp"
+                    className="hidden"
+                  />
+                </label>
+
+                <p className="font-mono-labels text-[11px] text-[#bfc9bf] opacity-80 uppercase tracking-widest">
+                  JPG &bull; PNG &bull; HEIC
                 </p>
               </div>
-            </div>
-          </div>
-        </section>
-      </main>
 
-      <Footer />
+              {/* Sunset Beach SVG Illustration at bottom-left */}
+              <div className="mt-8 lg:mt-auto pt-6 border-t border-[#35352f]/40">
+                <SunsetIllustration />
+              </div>
+            </div>
+
+            {/* DYNAMIC RIGHT SIDE: Generator Workspace */}
+            <div className="lg:col-span-7 flex flex-col justify-between h-full">
+              
+              {/* Dynamic Content Slot based on workspaceState */}
+              <div className="w-full flex-grow flex flex-col justify-center">
+                {workspaceState === 'UPLOAD' && (
+                  <UploadWorkspace onFileSelect={handleFileSelect} />
+                )}
+
+                {workspaceState === 'SELECT' && (
+                  <FaceSelectionWorkspace 
+                    imageSrc={uploadedImage}
+                    onSelectFace={handleSelectFace}
+                  />
+                )}
+
+                {workspaceState === 'RESULT' && (
+                  <ResultWorkspace 
+                    imageSrc={uploadedImage}
+                    selectedFaceId={selectedFaceId}
+                    onDownload={handleDownload}
+                    onShare={handleShare}
+                    onCreateAnother={handleResetWorkspace}
+                  />
+                )}
+              </div>
+
+              {/* Temple SVG Illustration at bottom-right */}
+              <div className="mt-8 lg:mt-auto pt-6 border-t border-[#35352f]/40 flex justify-end">
+                <TempleIllustration />
+              </div>
+            </div>
+
+          </div>
+
+          {/* Bottom Frame Footer */}
+          <div className="flex justify-between items-center mt-12 border-t border-[#35352f]/40 pt-4 font-mono-labels text-[11px] text-[#bfc9bf] uppercase">
+            <span>GOA, INDIA</span>
+            <div className="flex flex-col items-center gap-1">
+              <svg width="24" height="6" viewBox="0 0 24 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 5c1.5-1.5 3-1.5 4.5 0s3 1.5 4.5 0 3-1.5 4.5 0" stroke="#ff007a" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <span className="tracking-widest text-[#bfc9bf]/70">LESS NOISE. MORE SIGNAL.</span>
+            </div>
+            <span>28 - 31 OCT 2026</span>
+          </div>
+
+        </div>
+      </main>
     </div>
   );
 }
+
+/* --- Persistent Vector Illustrations --- */
+
+const SunsetIllustration = () => (
+  <svg viewBox="0 0 400 120" className="w-full h-auto max-h-[100px] opacity-85" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="120" cy="80" r="28" fill="#ffdb3c" />
+    <path d="M85 86h70 M75 93h90 M90 100h60 M105 107h30" stroke="#ff007a" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M10 110c30 0 60-10 100-10s80 10 120 10 70-3 100-3M10 110h380v10H10z" fill="#061d12" />
+    <path d="M10 110c30 0 60-10 100-10s80 10 120 10 70-3 100-3" stroke="#ffe16d" strokeWidth="1.5" strokeLinecap="round" />
+    <rect x="52" y="90" width="6" height="18" rx="3" transform="rotate(15 52 90)" fill="#ffe16d" stroke="#ff007a" strokeWidth="1.2" />
+    <rect x="22" y="88" width="24" height="16" fill="#ffe16d" stroke="#ffe16d" strokeWidth="1.2" />
+    <polygon points="18,88 34,74 50,88" fill="#ff007a" stroke="#ff007a" strokeWidth="1.2" />
+    <rect x="30" y="95" width="6" height="9" fill="#0a2d1d" />
+    <path d="M350 105c-12-20-8-50 8-70" stroke="#ffe16d" strokeWidth="3" strokeLinecap="round" />
+    <path d="M358 35c-12-8-28-4-36 4 M358 35c-4-16 8-28 20-32 M358 35c12-12 28-8 36 4 M358 35c8 12 4 28-4 36" stroke="#92d5a9" strokeWidth="2" strokeLinecap="round" />
+    <path d="M150 30c3-3 6 0 9-3M220 38c3-3 6 0 9-3" stroke="#ffe16d" strokeWidth="1" strokeLinecap="round" />
+  </svg>
+);
+
+const TempleIllustration = () => (
+  <svg viewBox="0 0 200 120" className="w-full h-auto max-h-[100px] opacity-85" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 110c30 0 50-8 80-8s60 8 100 8M10 110h180v10H10z" fill="#061d12" />
+    <path d="M10 110c30 0 50-8 80-8s60 8 100 8" stroke="#ffe16d" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M25 102c-6-16-4-36 6-48" stroke="#ffe16d" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M31 54c-8-6-20-3-25 3 M31 54c-3-12 6-20 14-24 M31 54c8-8 20-6 25 3" stroke="#92d5a9" strokeWidth="2" strokeLinecap="round" />
+    <path d="M42 104c-4-12-2-28 5-38" stroke="#ffe16d" strokeWidth="2" strokeLinecap="round" />
+    <path d="M47 66c-6-5-16-2-20 2 M47 66c-2-10 5-16 11-20 M47 66c6-6 16-5 20 2" stroke="#92d5a9" strokeWidth="1.5" strokeLinecap="round" />
+    <rect x="120" y="78" width="40" height="24" fill="#0a2d1d" stroke="#ffe16d" strokeWidth="1.5" />
+    <polygon points="116,78 140,58 164,78" fill="#ff007a" stroke="#ff007a" strokeWidth="1.5" />
+    <path d="M140 58v-12M136 50h8" stroke="#ffe16d" strokeWidth="1.5" />
+    <path d="M128 102v-8c0-2 1-4 4-4s4 2 4 4v8" fill="#ffe16d" />
+    <path d="M148 102v-8c0-2 1-4 4-4s4 2 4 4v8" fill="#ffe16d" />
+  </svg>
+);
