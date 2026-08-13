@@ -4,25 +4,25 @@
  */
 
 const SINGLE_FACE_POSTS = [
-  "New frame. Same builder energy. 🌴\nSee you at HH Goa 2026. #HHGoa",
-  "Less noise. More signal.\nSee you in Goa. 🌴 #HHGoa",
-  "Consider this my digital boarding pass to Goa. ✈️🌴\n#HHGoa",
-  "Frame locked.\nGoa unlocked. 🌴 #HHGoa",
-  "Putting a face to the builder.\nHH Goa 2026. 🌴 #HackerHouseGoa",
-  "Profile picture: upgraded.\nDestination: Goa. 🌴 #HHGoa",
-  "A little bit of code. A little bit of chaos.\nSee you at HH Goa 2026. 🌴",
-  "This is what I'm bringing to Goa.\nBuilder mode: ON. 🛠️🌴 #HHGoa",
-  "Made the frame.\nNow I just need to make it to Goa. 🌴 #HHGoa",
-  "Somewhere between building things and breaking things.\nHH Goa 2026. 🌴",
-  "Goa called.\nI changed my profile picture first. 🌴 #HHGoa",
-  "See you where builders, ideas and Goa collide. 🌴\n#HHGoa",
-  "One face. One frame.\nSee you at HH Goa 2026. 🌴 #HackerHouseGoa"
+  "New frame. Same builder energy. 🌴\nSee you at HH Goa 2026. #FrameInGoa #HHGoa",
+  "Less noise. More signal.\nSee you in Goa. 🌴 #FrameInGoa #HHGoa",
+  "Consider this my digital boarding pass to Goa. ✈️🌴\n#FrameInGoa #HHGoa",
+  "Frame locked.\nGoa unlocked. 🌴 #FrameInGoa #HHGoa",
+  "Putting a face to the builder.\nHH Goa 2026. 🌴 #FrameInGoa #HackerHouseGoa",
+  "Profile picture: upgraded.\nDestination: Goa. 🌴 #FrameInGoa #HHGoa",
+  "A little bit of code. A little bit of chaos.\nSee you at HH Goa 2026. 🌴 #FrameInGoa",
+  "This is what I'm bringing to Goa.\nBuilder mode: ON. 🛠️🌴 #FrameInGoa #HHGoa",
+  "Made the frame.\nNow I just need to make it to Goa. 🌴 #FrameInGoa #HHGoa",
+  "Somewhere between building things and breaking things.\nHH Goa 2026. 🌴 #FrameInGoa",
+  "Goa called.\nI changed my profile picture first. 🌴 #FrameInGoa #HHGoa",
+  "See you where builders, ideas and Goa collide. 🌴\n#FrameInGoa #HHGoa",
+  "One face. One frame.\nSee you at HH Goa 2026. 🌴 #FrameInGoa #HackerHouseGoa"
 ];
 
 const MULTI_FACE_POSTS = [
-  "Found my face in the crowd.\nNow find me in Goa. 🌴 #HHGoa",
-  "Spotted in the builder squad.\nSee you at HH Goa 2026. 🌴 #HHGoa",
-  "Framed and ready.\nSee you with the squad at HH Goa 2026. 🌴 #HHGoa",
+  "Found my face in the crowd.\nNow find me in Goa. 🌴 #FrameInGoa #HHGoa",
+  "Spotted in the builder squad.\nSee you at HH Goa 2026. 🌴 #FrameInGoa #HHGoa",
+  "Framed and ready.\nSee you with the squad at HH Goa 2026. 🌴 #FrameInGoa #HHGoa",
   ...SINGLE_FACE_POSTS
 ];
 
